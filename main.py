@@ -5,7 +5,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
-
 # no modificar
 def retrieve_phone_code(driver) -> str:
     """Este código devuelve un número de confirmación de teléfono y lo devuelve como un string.
@@ -33,11 +32,9 @@ def retrieve_phone_code(driver) -> str:
                             "Utiliza 'retrieve_phone_code' solo después de haber solicitado el código en tu aplicación.")
         return code
 
-
 class UrbanRoutesPage:
     from_field = (By.ID, 'from')
     to_field = (By.ID, 'to')
-    # Aquí prácticamente solo se agregan lo localizadores
     comfort_tariff_button = (By.CSS_SELECTOR, 'button.comfort-tariff')
     phone_field = (By.ID, 'phone')
     card_number_field = (By.ID, 'card_number')
@@ -50,7 +47,6 @@ class UrbanRoutesPage:
     search_driver_modal = (By.ID, 'search_driver_modal')
     driver_info = (By.CLASS_NAME, 'driver-info')
 
-
     def __init__(self, driver):
         self.driver = driver
 
@@ -60,11 +56,23 @@ class UrbanRoutesPage:
     def set_to(self, to_address):
         self.driver.find_element(*self.to_field).send_keys(to_address)
 
+    def get_from(self):
+        return self.driver.find_element(*self.from_field).get_property('value')
+
+    def get_to(self):
+        return self.driver.find_element(*self.to_field).get_property('value')
+
     def select_comfort_tariff(self):
         self.driver.find_element(*self.comfort_tariff_button).click()
 
+    def is_comfort_tariff_selected(self):
+        return 'selected' in self.driver.find_element(*self.comfort_tariff_button).get_attribute('class')
+
     def set_phone_number(self, phone_number):
         self.driver.find_element(*self.phone_field).send_keys(phone_number)
+
+    def get_phone_number(self):
+        return self.driver.find_element(*self.phone_field).get_property('value')
 
     def add_credit_card(self, card_number, card_code):
         self.driver.find_element(*self.card_number_field).send_keys(card_number)
@@ -73,22 +81,39 @@ class UrbanRoutesPage:
         card_code_input.send_keys(Keys.TAB)  # Cambiar el enfoque para activar el botón
         self.driver.find_element(*self.link_card_button).click()
 
+    def is_card_linked(self):
+        return "linked" in self.driver.find_element(*self.link_card_button).get_attribute('class')
+
     def write_message_for_driver(self, message):
         self.driver.find_element(*self.message_field).send_keys(message)
+
+    def get_message_for_driver(self):
+        return self.driver.find_element(*self.message_field).get_property('value')
 
     def request_blanket_and_tissues(self):
         self.driver.find_element(*self.blanket_checkbox).click()
         self.driver.find_element(*self.tissues_checkbox).click()
+
+    def are_blanket_and_tissues_requested(self):
+        blanket_checked = self.driver.find_element(*self.blanket_checkbox).is_selected()
+        tissues_checked = self.driver.find_element(*self.tissues_checkbox).is_selected()
+        return blanket_checked and tissues_checked
 
     def request_ice_cream(self, quantity):
         ice_cream_field = self.driver.find_element(*self.ice_cream_quantity_field)
         ice_cream_field.clear()
         ice_cream_field.send_keys(quantity)
 
+    def get_ice_cream_quantity(self):
+        return int(self.driver.find_element(*self.ice_cream_quantity_field).get_property('value'))
+
     def wait_for_driver_info(self):
         WebDriverWait(self.driver, 120).until(
             expected_conditions.visibility_of_element_located(self.driver_info)
         )
+
+    def is_driver_info_visible(self):
+        return self.driver.find_element(*self.driver_info).is_displayed()
 
 class TestUrbanRoutes:
 
@@ -109,41 +134,43 @@ class TestUrbanRoutes:
         address_to = data.address_to
         routes_page.set_from(address_from)
         routes_page.set_to(address_to)
-        assert routes_page.get_from() == address_from
-        assert routes_page.get_to() == address_to
+        assert routes_page.get_from() == address_from, f"Expected {address_from}, but got {routes_page.get_from()}"
+        assert routes_page.get_to() == address_to, f"Expected {address_to}, but got {routes_page.get_to()}"
 
-    def test_full_taxi_order(self):
-        self.driver.get(data.urban_routes_url)
+    def test_select_comfort_tariff(self):
         routes_page = UrbanRoutesPage(self.driver)
-
-        # Configurar la dirección
-        routes_page.set_from(data.address_from)
-        routes_page.set_to(data.address_to)
-        assert routes_page.get_from() == data.address_from
-        assert routes_page.get_to() == data.address_to
-
-        # Seleccionar la tarifa Comfort
         routes_page.select_comfort_tariff()
+        assert routes_page.is_comfort_tariff_selected(), "Comfort tariff should be selected but it is not."
 
-        # Rellenar el número de teléfono
+    def test_set_phone_number(self):
+        routes_page = UrbanRoutesPage(self.driver)
         routes_page.set_phone_number(data.phone_number)
+        assert routes_page.get_phone_number() == data.phone_number, f"Expected {data.phone_number}, but got {routes_page.get_phone_number()}"
 
-        # Agregar una tarjeta de crédito
+    def test_add_credit_card(self):
+        routes_page = UrbanRoutesPage(self.driver)
         routes_page.add_credit_card(data.card_number, data.card_code)
-        # Se puede usar la función retrieve_phone_code() aquí si es necesario
+        assert routes_page.is_card_linked(), "Card should be linked but it is not."
 
-        # Escribir un mensaje para el conductor
+    def test_write_message_for_driver(self):
+        routes_page = UrbanRoutesPage(self.driver)
         routes_page.write_message_for_driver(data.message_for_driver)
+        assert routes_page.get_message_for_driver() == data.message_for_driver, f"Expected '{data.message_for_driver}', but got '{routes_page.get_message_for_driver()}'"
 
-        # Pedir una manta y pañuelos
+    def test_request_blanket_and_tissues(self):
+        routes_page = UrbanRoutesPage(self.driver)
         routes_page.request_blanket_and_tissues()
+        assert routes_page.are_blanket_and_tissues_requested(), "Blanket and tissues should be requested but they are not."
 
-        # Pedir 2 helados
+    def test_request_ice_cream(self):
+        routes_page = UrbanRoutesPage(self.driver)
         routes_page.request_ice_cream(2)
+        assert routes_page.get_ice_cream_quantity() == 2, f"Expected 2, but got {routes_page.get_ice_cream_quantity()}"
 
-        # Esperar a que aparezca la información del conductor
+    def test_wait_for_driver_info(self):
+        routes_page = UrbanRoutesPage(self.driver)
         routes_page.wait_for_driver_info()
-
+        assert routes_page.is_driver_info_visible(), "Driver info should be visible but it is not."
 
     @classmethod
     def teardown_class(cls):
