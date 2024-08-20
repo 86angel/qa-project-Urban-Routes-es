@@ -13,6 +13,7 @@
 - **ChromeDriver**: Driver de Selenium utilizado para controlar el navegador Google Chrome durante las pruebas.
 - **JSON**: Utilizado para manejar y parsear los logs de la aplicación, específicamente para interceptar y utilizar el código de confirmación del teléfono.
 - **README.SO**: Utilizado para realizar la edición del archivo README.
+- **chatGPT**: Utilizado para realizar la traducción de algunas variables que tenían combinación entre español e inglés (esto entorpecía la legibilidad del código).
 
 
 
