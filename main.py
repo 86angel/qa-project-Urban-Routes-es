@@ -2,7 +2,7 @@ import data
 from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 # no modificar
@@ -109,7 +109,7 @@ class UrbanRoutesPage:
 
     def wait_for_driver_info(self):
         WebDriverWait(self.driver, 120).until(
-            expected_conditions.visibility_of_element_located(self.driver_info)
+            EC.visibility_of_element_located(self.driver_info)
         )
 
     def is_driver_info_visible(self):
@@ -130,6 +130,10 @@ class TestUrbanRoutes:
     def test_set_route(self):
         self.driver.get(data.urban_routes_url)
         routes_page = UrbanRoutesPage(self.driver)
+
+        # Esperar hasta que el campo "from" esté presente antes de continuar
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(routes_page.from_field))
+
         address_from = data.address_from
         address_to = data.address_to
         routes_page.set_from(address_from)
@@ -139,36 +143,49 @@ class TestUrbanRoutes:
 
     def test_select_comfort_tariff(self):
         routes_page = UrbanRoutesPage(self.driver)
+        # Esperar hasta que el botón de tarifa comfort esté visible
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable(routes_page.comfort_tariff_button))
         routes_page.select_comfort_tariff()
         assert routes_page.is_comfort_tariff_selected(), "Comfort tariff should be selected but it is not."
 
     def test_set_phone_number(self):
         routes_page = UrbanRoutesPage(self.driver)
+        # Esperar hasta que el campo de teléfono esté presente
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(routes_page.phone_field))
         routes_page.set_phone_number(data.phone_number)
         assert routes_page.get_phone_number() == data.phone_number, f"Expected {data.phone_number}, but got {routes_page.get_phone_number()}"
 
     def test_add_credit_card(self):
         routes_page = UrbanRoutesPage(self.driver)
+        # Esperar hasta que el campo del número de tarjeta esté presente
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(routes_page.card_number_field))
         routes_page.add_credit_card(data.card_number, data.card_code)
         assert routes_page.is_card_linked(), "Card should be linked but it is not."
 
     def test_write_message_for_driver(self):
         routes_page = UrbanRoutesPage(self.driver)
+        # Esperar hasta que el campo del mensaje esté presente
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(routes_page.message_field))
         routes_page.write_message_for_driver(data.message_for_driver)
         assert routes_page.get_message_for_driver() == data.message_for_driver, f"Expected '{data.message_for_driver}', but got '{routes_page.get_message_for_driver()}'"
 
     def test_request_blanket_and_tissues(self):
         routes_page = UrbanRoutesPage(self.driver)
+        # Esperar hasta que los checkboxes estén presentes
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(routes_page.blanket_checkbox))
         routes_page.request_blanket_and_tissues()
         assert routes_page.are_blanket_and_tissues_requested(), "Blanket and tissues should be requested but they are not."
 
     def test_request_ice_cream(self):
         routes_page = UrbanRoutesPage(self.driver)
+        # Esperar hasta que el campo de cantidad de helado esté presente
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(routes_page.ice_cream_quantity_field))
         routes_page.request_ice_cream(2)
         assert routes_page.get_ice_cream_quantity() == 2, f"Expected 2, but got {routes_page.get_ice_cream_quantity()}"
 
     def test_wait_for_driver_info(self):
         routes_page = UrbanRoutesPage(self.driver)
+        # Esperar hasta que la información del conductor sea visible
         routes_page.wait_for_driver_info()
         assert routes_page.is_driver_info_visible(), "Driver info should be visible but it is not."
 
